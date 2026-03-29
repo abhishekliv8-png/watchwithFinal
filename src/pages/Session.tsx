@@ -812,9 +812,9 @@ export default function Session() {
                 <p className="text-center text-zinc-600 text-[10px] font-mono uppercase tracking-widest mt-4">
                   Waiting for at least one friend to join...
                 </p>
-              ) : session?.expectedParticipants > preferences.length ? (
+              ) : session?.expectedParticipants + 1 > preferences.length ? (
                 <p className="text-center text-orange-500/60 text-[10px] font-mono uppercase tracking-widest mt-4 animate-pulse">
-                  Still waiting for {session.expectedParticipants - preferences.length} more friends — start now or wait for everyone?
+                  Still waiting for {(session.expectedParticipants + 1) - preferences.length} more friends — start now or wait for everyone?
                 </p>
               ) : (
                 <p className="text-center text-zinc-600 text-[10px] font-mono uppercase tracking-widest mt-4">
@@ -914,16 +914,16 @@ export default function Session() {
                     <div className="max-w-xs mx-auto mb-6">
                       <div className="flex justify-between items-end mb-2">
                         <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
-                          {preferences.filter(p => p.submitted).length} of {session.expectedParticipants} friends voted
+                          {preferences.filter(p => p.submitted).length} of {session.expectedParticipants + 1} have voted
                         </p>
                         <p className="text-xs font-bold text-orange-500">
-                          {Math.round(Math.min((preferences.filter(p => p.submitted).length / session.expectedParticipants) * 100, 100))}%
+                          {Math.round(Math.min((preferences.filter(p => p.submitted).length / session.expectedParticipants + 1) * 100, 100))}%
                         </p>
                       </div>
                       <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                         <motion.div 
                           initial={{ width: 0 }}
-                          animate={{ width: `${Math.min((preferences.filter(p => p.submitted).length / session.expectedParticipants) * 100, 100)}%` }}
+                          animate={{ width: `${Math.min((preferences.filter(p => p.submitted).length / session.expectedParticipants + 1) * 100, 100)}%` }}
                           className="h-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]"
                         />
                       </div>
