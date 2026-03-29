@@ -430,6 +430,7 @@ export default function Session() {
         await updateDoc(doc(db, "sessions", sessionId), {
           status: "winner",
           winner: winners[0]
+          tieBreaker: false
         });
       } else {
         // It's a tie! Show only the tied movies and reset votes
