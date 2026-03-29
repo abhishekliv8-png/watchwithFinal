@@ -433,7 +433,10 @@ export default function Session() {
         });
       } else {
         // It's a tie! Show only the tied movies and reset votes
-        alert(`It's a tie between ${winners.length} movies! Starting a tie-breaker round with only the top picks.`);
+        await updateDoc(doc(db, "sessions", sessionId), { 
+          tieBreaker: true,
+          tieMessage: `It's a tie between ${winners.length} movies! Vote again on just the top picks.`
+        });
         
         // Reset votes in Firestore
         const deletePromises = votes.map(v => 
@@ -1143,6 +1146,11 @@ export default function Session() {
             {session.status === "voting" && (
               <p className="text-zinc-500 font-mono text-xs uppercase tracking-[0.2em]">
                 {session.expectedParticipants === 0 ? "Vote for the movie you want to watch tonight" : "Vote for the movie you want to watch tonight"}
+              </p>
+            )}
+            {session.tieBreaker && (
+              <p className="text-orange-500 text-sm font-bold text-center mb-4 animate-pulse">
+                🔥 Tie-breaker round! Vote again on the top picks.
               </p>
             )}
           </div>
