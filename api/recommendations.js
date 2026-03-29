@@ -103,7 +103,14 @@ export default async function handler(req, res) {
       return { ...movie, totalScore, year: movie.release_date ? movie.release_date.substring(0, 4) : "N/A" };
     });
 
-    const top30 = scoredMovies.sort((a, b) => b.totalScore - a.totalScore).slice(0, 30);
+   const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const notInTheaters = scoredMovies.filter(m => {
+      if (!m.release_date) return true;
+      return new Date(m.release_date) < sixtyDaysAgo;
+    });
+    const moviesToCheck = notInTheaters.length > 10 ? notInTheaters : scoredMovies;
+    const top30 = moviesToCheck.sort((a, b) => b.totalScore - a.totalScore).slice(0, 30);
 
     const resultsWithAvailability = await Promise.all(top30.map(async (m) => {
       let availableOn = [];
