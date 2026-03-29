@@ -5,6 +5,18 @@ const GENRE_MAP = {
   10770: "TV Movie", 53: "Thriller", 10752: "War", 37: "Western"
 };
 
+const SERVICE_TO_TMDB = {
+  netflix: ["Netflix", "Netflix basic with Ads"],
+  amazon: ["Amazon Prime Video", "Amazon Video"],
+  disney: ["Disney Plus", "Disney+"],
+  hbo: ["Max", "HBO Max", "Max Amazon Channel"],
+  hulu: ["Hulu"],
+  apple: ["Apple TV Plus", "Apple TV+"],
+  peacock: ["Peacock", "Peacock Premium"],
+  paramount: ["Paramount Plus", "Paramount+", "Paramount Plus Apple TV Channel"],
+  crunchyroll: ["Crunchyroll"]
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -29,6 +41,26 @@ export default async function handler(req, res) {
     if (topGenreIds.length === 0) {
       topGenreIds = Object.keys(genreCounts).map(Number);
     }
+
+    const serviceCounts = {};
+    participants.forEach(p => {
+      (p.services || []).forEach(sId => {
+        serviceCounts[sId] = (serviceCounts[sId] || 0) + 1;
+      });
+    });
+
+    const groupTmdbNames = new Set();
+    Object.keys(serviceCounts).forEach(sId => {
+      (SERVICE_TO_TMDB[sId] || []).forEach(name => groupTmdbNames.add(name.toLowerCase()));
+    });
+
+    const sharedServiceIds = Object.keys(serviceCounts).filter(
+      sId => serviceCounts[sId] === participants.length
+    );
+    const sharedTmdbNames = new Set();
+    sharedServiceIds.forEach(sId => {
+      (SERVICE_TO_TMDB[sId] || []).forEach(name => sharedTmdbNames.add(name.toLowerCase()));
+    });
 
     const fetchMovies = async (page) => {
       let url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&vote_average.gte=6.0&vote_count.gte=100&sort_by=popularity.desc&page=${page}&watch_region=US`;
@@ -55,7 +87,7 @@ export default async function handler(req, res) {
       return res.json({ results: (popData.results || []).slice(0, 5).map(m => ({
         id: m.id, title: m.title, poster: `https://image.tmdb.org/t/p/w500${m.poster_path}`,
         rating: m.vote_average, year: m.release_date ? m.release_date.substring(0, 4) : "N/A",
-        overview: m.overview, matchScore: 75, genre_ids: m.genre_ids
+        overview: m.overview, matchScore: 75, genre_ids: m.genre_ids, availableOn: []
       }))});
     }
 
@@ -75,27 +107,52 @@ export default async function handler(req, res) {
 
     const resultsWithAvailability = await Promise.all(top30.map(async (m) => {
       let availableOn = [];
+      let availableOnGroupServices = [];
       try {
         const providerRes = await fetch(`https://api.themoviedb.org/3/movie/${m.id}/watch/providers?api_key=${TMDB_API_KEY}`);
         const providerData = await providerRes.json();
         const usResults = providerData.results?.US || {};
-        const providers = [...(usResults.flatrate || []), ...(usResults.rent || []), ...(usResults.buy || [])];
+        const providers = usResults.flatrate || [];
         availableOn = [...new Set(providers.map(p => p.provider_name))];
+        availableOnGroupServices = availableOn.filter(name =>
+          groupTmdbNames.has(name.toLowerCase())
+        );
       } catch (e) { /* skip */ }
+
+      const onSharedService = availableOn.some(name => sharedTmdbNames.has(name.toLowerCase()));
+      const onAnyGroupService = availableOnGroupServices.length > 0;
+      const serviceBonus = onSharedService ? 0.2 : (onAnyGroupService ? 0.1 : 0);
+      const finalScore = m.totalScore + serviceBonus;
+
       return {
         id: m.id, title: m.title, poster: `https://image.tmdb.org/t/p/w500${m.poster_path}`,
         rating: m.vote_average, year: m.year, overview: m.overview,
-        matchScore: Math.round(m.totalScore * 100),
+        matchScore: Math.round(finalScore * 100),
         genreTags: (m.genre_ids || []).map(id => GENRE_MAP[id]).filter(Boolean),
-        availableOn, genre_ids: m.genre_ids
+        availableOn: availableOnGroupServices.length > 0 ? availableOnGroupServices : availableOn,
+        onGroupService: onAnyGroupService,
+        genre_ids: m.genre_ids
       };
     }));
 
-    const availableMovies = resultsWithAvailability.filter(m => m.availableOn.length > 0);
-    const moviesToUse = availableMovies.length > 0 ? availableMovies : resultsWithAvailability;
-    const top15 = moviesToUse.slice(0, 15);
-    const shuffled = top15.sort(() => Math.random() - 0.5);
-    return res.json({ results: shuffled.slice(0, 8) });
+    const onGroupServices = resultsWithAvailability.filter(m => m.onGroupService);
+    const others = resultsWithAvailability.filter(m => !m.onGroupService && m.availableOn.length > 0);
+
+    let finalResults;
+    if (onGroupServices.length >= 5) {
+      const top15 = onGroupServices.sort((a, b) => b.matchScore - a.matchScore).slice(0, 15);
+      finalResults = top15.sort(() => Math.random() - 0.5).slice(0, 8);
+    } else if (onGroupServices.length > 0) {
+      const remaining = 8 - onGroupServices.length;
+      const fillers = others.sort((a, b) => b.matchScore - a.matchScore).slice(0, remaining);
+      finalResults = [...onGroupServices, ...fillers];
+    } else {
+      const available = resultsWithAvailability.filter(m => m.availableOn.length > 0);
+      const moviesToUse = available.length > 0 ? available : resultsWithAvailability;
+      finalResults = moviesToUse.sort(() => Math.random() - 0.5).slice(0, 8);
+    }
+
+    return res.json({ results: finalResults });
   } catch (error) {
     console.error("Recommendation error:", error);
     return res.status(500).json({ error: "Failed to generate recommendations" });
