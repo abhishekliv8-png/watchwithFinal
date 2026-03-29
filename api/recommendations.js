@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     });
 
     const fetchMovies = async (page) => {
-      let url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&vote_average.gte=6.0&vote_count.gte=100&sort_by=popularity.desc&page=${page}&watch_region=US`;
+      let url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&vote_average.gte=6.0&vote_count.gte=100&sort_by=popularity.desc&page=${page}&watch_region=US&with_original_language=en`;
       if (topGenreIds.length > 0) url += `&with_genres=${topGenreIds.join(",")}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error(`TMDB API returned ${response.status}`);
@@ -155,8 +155,14 @@ export default async function handler(req, res) {
       finalResults = [...onGroupServices, ...fillers];
     } else {
       const available = resultsWithAvailability.filter(m => m.availableOn.length > 0);
-      const moviesToUse = available.length > 0 ? available : resultsWithAvailability;
-      finalResults = moviesToUse.sort(() => Math.random() - 0.5).slice(0, 8);
+      if (available.length > 0) {
+        finalResults = available.sort(() => Math.random() - 0.5).slice(0, 8);
+      } else {
+        finalResults = resultsWithAvailability
+          .sort((a, b) => b.matchScore - a.matchScore)
+          .slice(0, 8)
+          .map(m => ({ ...m, availableOn: ["Check streaming apps"] }));
+      }
     }
 
     return res.json({ results: finalResults });
