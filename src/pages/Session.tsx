@@ -1096,6 +1096,13 @@ export default function Session() {
                               <span className="text-zinc-600 text-[10px] font-mono uppercase tracking-widest">Check TMDB for availability</span>
                             )}
                           </div>
+                          <p className="text-zinc-600 text-[9px] font-mono mt-2">Availability may vary. Check your streaming app to confirm.</p>
+```
+
+8. To find the exact spot, search for `Where to watch` — you'll find the button. The disclaimer goes right **above** that button. So find:
+```
+<a 
+  href={`https://www.themoviedb.org/movie/${session.winner.id}`}
                         </div>
                       </div>
                     </div>
