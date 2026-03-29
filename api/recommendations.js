@@ -55,7 +55,7 @@ export default async function handler(req, res) {
       return res.json({ results: (popData.results || []).slice(0, 5).map(m => ({
         id: m.id, title: m.title, poster: `https://image.tmdb.org/t/p/w500${m.poster_path}`,
         rating: m.vote_average, year: m.release_date ? m.release_date.substring(0, 4) : "N/A",
-        overview: m.overview, matchScore: 75, genre_ids: m.genre_ids
+        overview: m.overview, matchScore: participants.length === 1 ? 100 : 75, genre_ids: m.genre_ids
       }))});
     }
 
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
       return {
         id: m.id, title: m.title, poster: `https://image.tmdb.org/t/p/w500${m.poster_path}`,
         rating: m.vote_average, year: m.year, overview: m.overview,
-        matchScore: Math.round(m.totalScore * 100),
+        matchScore: participants.length === 1 ? 100 : Math.round(m.totalScore * 100),
         genreTags: (m.genre_ids || []).map(id => GENRE_MAP[id]).filter(Boolean),
         availableOn, genre_ids: m.genre_ids
       };
