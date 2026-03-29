@@ -186,9 +186,55 @@ export default function Home() {
             </h1>
           </div>
 
-          <p className="text-zinc-300 mb-12 text-lg leading-relaxed text-shadow-premium font-medium">
+          <p className="text-zinc-300 mb-8 text-lg leading-relaxed text-shadow-premium font-medium">
             🎬We pick the movie. You make the popcorn.🍿
           </p>
+
+          {/* Movie showcase */}
+          <div className="mb-10 overflow-hidden">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 text-center mb-3">What your group could be watching tonight</p>
+            <div className="relative">
+              <style>{`
+                @keyframes scrollCards {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(-50%); }
+                }
+                .showcase-track {
+                  display: flex;
+                  gap: 12px;
+                  animation: scrollCards 20s linear infinite;
+                  width: max-content;
+                }
+                .showcase-track:hover {
+                  animation-play-state: paused;
+                }
+              `}</style>
+              <div className="showcase-track">
+                {[...Array(2)].map((_, loopIdx) => (
+                  [
+                    { title: "Interstellar", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", match: "94%", genres: ["Sci-Fi", "Drama", "Adventure"] },
+                    { title: "Knives Out", poster: "https://image.tmdb.org/t/p/w500/pThyQovXQrw2m0s9x82twj48Jq4.jpg", match: "87%", genres: ["Mystery", "Comedy", "Thriller"] },
+                    { title: "Spider-Verse", poster: "https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg", match: "91%", genres: ["Animation", "Action", "Adventure"] },
+                  ].map((movie, i) => (
+                    <div key={`${loopIdx}-${i}`} className="flex-shrink-0 w-[160px] bg-zinc-900/80 border border-zinc-800 rounded-xl overflow-hidden">
+                      <div className="h-[100px] overflow-hidden">
+                        <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover object-top" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="p-3">
+                        <p className="text-white text-xs font-bold truncate">{movie.title}</p>
+                        <p className="text-orange-500 text-lg font-black">{movie.match}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {movie.genres.map(g => (
+                            <span key={g} className="text-[9px] bg-white/10 text-zinc-400 px-1.5 py-0.5 rounded">{g}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ))}
+              </div>
+            </div>
+          </div>
 
           <form onSubmit={createSession} className="space-y-4">
             <div className="relative group">
