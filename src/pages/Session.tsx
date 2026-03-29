@@ -366,12 +366,13 @@ export default function Session() {
 
      // Host saves the initial movie list to the session
       if (userId === "creator") {
-        // Solo user: skip voting, go straight to winner
         if (session?.expectedParticipants === 0 && recommendedMovies.length > 0) {
+          // Solo: pick a random movie from top 3, skip voting
+          const randomIndex = Math.floor(Math.random() * Math.min(3, recommendedMovies.length));
           await updateDoc(doc(db, "sessions", sessionId), { 
             movies: recommendedMovies,
             status: "winner",
-            winner: recommendedMovies[0]
+            winner: recommendedMovies[randomIndex]
           });
         } else {
           await updateDoc(doc(db, "sessions", sessionId), { 
