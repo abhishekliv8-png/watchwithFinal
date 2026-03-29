@@ -429,7 +429,7 @@ export default function Session() {
         // We have a single winner!
         await updateDoc(doc(db, "sessions", sessionId), {
           status: "winner",
-          winner: winners[0]
+          winner: winners[0],
           tieBreaker: false
         });
       } else {
