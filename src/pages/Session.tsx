@@ -364,11 +364,20 @@ export default function Session() {
         window.gtag('event', 'results_viewed');
       }
 
-      // Host saves the initial movie list to the session
+     // Host saves the initial movie list to the session
       if (userId === "creator") {
-        await updateDoc(doc(db, "sessions", sessionId), { 
-          movies: recommendedMovies
-        });
+        // Solo user: skip voting, go straight to winner
+        if (session?.expectedParticipants === 0 && recommendedMovies.length > 0) {
+          await updateDoc(doc(db, "sessions", sessionId), { 
+            movies: recommendedMovies,
+            status: "winner",
+            winner: recommendedMovies[0]
+          });
+        } else {
+          await updateDoc(doc(db, "sessions", sessionId), { 
+            movies: recommendedMovies
+          });
+        }
       }
     } catch (error) {
       console.error("Recommendation fetch error:", error);
