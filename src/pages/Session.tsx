@@ -740,12 +740,12 @@ export default function Session() {
               {session?.expectedParticipants > 0 ? (
                 <div className="text-right">
                   <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mb-1">
-                    {preferences.length} of {session.expectedParticipants} friends joined
+                    {preferences.length} of {session.expectedParticipants + 1} friends joined
                   </p>
                   <div className="w-32 h-1 bg-zinc-900 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${Math.min((preferences.length / session.expectedParticipants) * 100, 100)}%` }}
+                      animate={{ width: `${Math.min((preferences.length / (session.expectedParticipants + 1)) * 100, 100)}%` }}
                       className="h-full bg-orange-500"
                     />
                   </div>
